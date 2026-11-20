@@ -4,17 +4,26 @@ import Link from "next/link";
 import { useState } from "react";
 import { ScanForm } from "@/components/scan-form";
 import { inventoryHref } from "@/components/view-toggle";
+import type { AssetType, HealthStatus, SizeSort, UsageFilter } from "@/lib/inventory";
 import type { ProjectSummary } from "@/lib/store/types";
 
 export function DashboardFrame({
   projects,
   activeId,
   view,
+  type,
+  status,
+  sort,
+  usage,
   children,
 }: {
   projects: ProjectSummary[];
   activeId?: string;
   view: "list" | "grid";
+  type?: AssetType;
+  status?: HealthStatus;
+  sort?: SizeSort;
+  usage?: UsageFilter;
   children: React.ReactNode;
 }) {
   const [railOpen, setRailOpen] = useState(true);
@@ -54,7 +63,7 @@ export function DashboardFrame({
                 return (
                   <Link
                     key={project.siteId}
-                    href={inventoryHref(project.siteId, view)}
+                    href={inventoryHref(project.siteId, view, { type, status, sort, usage })}
                     aria-current={active ? "page" : undefined}
                     className={`flex flex-col gap-2 border-l-[3px] px-3 py-3.5 ${
                       active
@@ -112,7 +121,7 @@ export function DashboardFrame({
               {projects.map((project) => (
                 <Link
                   key={project.siteId}
-                  href={inventoryHref(project.siteId, view)}
+                  href={inventoryHref(project.siteId, view, { type, status, sort, usage })}
                   aria-label={project.siteName}
                   aria-current={project.siteId === activeId ? "page" : undefined}
                   className={`size-2.5 rounded-full ${

@@ -16,9 +16,11 @@ import { UsageChips } from "@/components/usage-chips";
 export function AssetGrid({
   assets,
   projectId,
+  total,
 }: {
   assets: Asset[];
   projectId: string;
+  total: number;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -27,7 +29,7 @@ export function AssetGrid({
           Visual inventory
         </p>
         <p className="font-mono text-[12px] leading-4 text-ink">
-          Showing {assets.length} of {assets.length}
+          Showing {assets.length} of {total}
         </p>
       </div>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-x-6 gap-y-6">

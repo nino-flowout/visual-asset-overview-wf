@@ -1,13 +1,19 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import type { AssetType, HealthStatus, SizeSort, UsageFilter } from "@/lib/inventory";
 
 export function inventoryHref(
   projectId: string | undefined,
   view: "list" | "grid",
+  filters?: { type?: AssetType; status?: HealthStatus; sort?: SizeSort; usage?: UsageFilter },
 ): string {
   const params = new URLSearchParams();
   if (projectId) params.set("project", projectId);
   if (view === "grid") params.set("view", "grid");
+  if (filters?.type) params.set("type", filters.type);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.sort === "asc") params.set("sort", "asc");
+  if (filters?.usage) params.set("usage", filters.usage);
   const query = params.toString();
   return query ? `/?${query}` : "/";
 }
@@ -15,17 +21,26 @@ export function inventoryHref(
 export function ViewToggle({
   projectId,
   view,
+  type,
+  status,
+  sort,
+  usage,
 }: {
   projectId?: string;
   view: "list" | "grid";
+  type?: AssetType;
+  status?: HealthStatus;
+  sort?: SizeSort;
+  usage?: UsageFilter;
 }) {
+  const filters = { type, status, sort, usage };
   return (
     <div className="flex shrink-0 border border-mist" role="group" aria-label="Layout">
-      <ToggleLink href={inventoryHref(projectId, "list")} active={view === "list"}>
+      <ToggleLink href={inventoryHref(projectId, "list", filters)} active={view === "list"}>
         <ListIcon active={view === "list"} />
         List
       </ToggleLink>
-      <ToggleLink href={inventoryHref(projectId, "grid")} active={view === "grid"}>
+      <ToggleLink href={inventoryHref(projectId, "grid", filters)} active={view === "grid"}>
         <GridIcon active={view === "grid"} />
         Grid
       </ToggleLink>
