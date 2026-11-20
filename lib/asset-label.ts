@@ -26,7 +26,7 @@ export function usageChips(usage: readonly AssetUsage[]): string[] {
   const chips: string[] = [];
   for (const item of usage) {
     if (item.context === "cms") pushChip(chips, "CMS");
-    if (item.context === "custom-code") pushChip(chips, "Code");
+    if (item.context === "custom-code") pushChip(chips, "Custom code");
     pushChip(chips, pageChip(item.location));
     if (chips.length >= 3) break;
   }
@@ -34,11 +34,13 @@ export function usageChips(usage: readonly AssetUsage[]): string[] {
 }
 
 function pushChip(chips: string[], label: string) {
-  if (!chips.includes(label)) chips.push(label);
+  const key = label.toLowerCase();
+  if (chips.some((chip) => chip.toLowerCase() === key)) return;
+  chips.push(label);
 }
 
 function pageChip(location: string): string {
   const base = location.split("/").pop()?.replace(/\.(html|css|js|mjs)$/i, "") ?? location;
   if (!base || base === "index") return "Home";
-  return base.replace(/[-_]+/g, " ");
+  return base.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

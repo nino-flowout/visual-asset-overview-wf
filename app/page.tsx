@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { AssetGrid } from "@/components/asset-grid";
-import { ScanForm } from "@/components/scan-form";
-import { ViewToggle, inventoryHref } from "@/components/view-toggle";
+import { AssetList } from "@/components/asset-list";
+import { DashboardFrame } from "@/components/dashboard-frame";
+import { ViewToggle } from "@/components/view-toggle";
 import { formatBytes } from "@/lib/format";
-import { countByStatus, type Asset, type HealthStatus } from "@/lib/inventory";
-import { mediaUrl } from "@/lib/media-url";
+import { countByStatus, type HealthStatus } from "@/lib/inventory";
 import { getProjectStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -22,155 +21,165 @@ export default async function Home({
   const selected = selectedId ? await store.get(selectedId) : null;
   const inventory = selected?.inventory ?? null;
   const counts = inventory ? countByStatus(inventory.assets) : null;
+  const totalBytes = inventory
+    ? inventory.assets.reduce((sum, asset) => sum + (asset.sizeBytes ?? 0), 0)
+    : 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
-      <header className="flex flex-col gap-2">
-        <p className="text-xs font-semibold tracking-[0.14em] text-zinc-500">
-          VISUAL ASSET OVERVIEW
+    <DashboardFrame projects={projects} activeId={inventory?.siteId} view={view}>
+      <header className="flex items-center justify-between gap-6 px-6 pt-7 sm:px-10">
+        <p className="inline-flex items-center gap-2.5 text-[13px] leading-4 font-medium tracking-[0.06em] text-ink uppercase">
+          <span className="size-2.5 rounded-full bg-navy" aria-hidden="true" />
+          Visual Asset Overview
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Local Webflow inventory</h1>
-        <p className="max-w-2xl text-zinc-600">
-          Scan an exported site on this machine. File sizes, alt text, and usage stay in a
-          local inventory the dashboard can read.
+        <p className="flex items-center gap-6">
+          <span className="hidden font-mono text-[12px] leading-4 text-ink sm:inline">
+            Export · JSON ready
+          </span>
+          <span className="text-[13px] leading-4 font-medium text-navy">
+            {inventory ? "Scan complete" : "Awaiting scan"}
+          </span>
         </p>
       </header>
 
-      <ScanForm />
-
-      {projects.length > 0 ? (
-        <nav className="flex flex-wrap gap-2" aria-label="Scanned projects">
-          {projects.map((project) => {
-            const active = project.siteId === inventory?.siteId;
-            return (
-              <Link
-                key={project.siteId}
-                href={inventoryHref(project.siteId, view)}
-                className={`rounded-full border px-3 py-1 text-sm ${
-                  active
-                    ? "border-zinc-950 bg-zinc-950 text-white"
-                    : "border-zinc-300 text-zinc-700"
-                }`}
-              >
-                {project.siteName}
-              </Link>
-            );
-          })}
-        </nav>
-      ) : null}
-
       {!inventory || !counts ? (
-        <p className="text-zinc-600">
-          {requestedId
-            ? "That project is not in the local inventory."
-            : "No project scanned yet."}
-        </p>
-      ) : (
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">{inventory.siteName}</h2>
-              <p className="text-sm text-zinc-500">
-                {inventory.assets.length} assets · scanned{" "}
-                {new Date(inventory.scannedAt).toLocaleString()}
-              </p>
-            </div>
-            <div className="flex items-end gap-6">
-              <dl className="flex gap-6 text-sm">
-                <Count label="Red" value={counts.red} tone="red" />
-                <Count label="Yellow" value={counts.yellow} tone="yellow" />
-                <Count label="Green" value={counts.green} tone="green" />
-              </dl>
-              <ViewToggle projectId={inventory.siteId} view={view} />
-            </div>
-          </div>
-
-          {view === "grid" ? (
-            <AssetGrid assets={inventory.assets} projectId={inventory.siteId} />
-          ) : (
-          <div className="overflow-x-auto rounded-lg border border-zinc-200">
-            <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-              <thead className="bg-zinc-50 text-xs tracking-wide text-zinc-500 uppercase">
-                <tr>
-                  <th className="px-3 py-2 font-medium">Asset</th>
-                  <th className="px-3 py-2 font-medium">Type</th>
-                  <th className="px-3 py-2 font-medium">Size</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Usage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventory.assets.map((asset) => (
-                  <AssetRow key={asset.id} projectId={inventory.siteId} asset={asset} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-          )}
+        <section className="flex flex-col gap-4 px-6 pt-14 sm:px-10">
+          <h1 className="project-title text-navy">
+            {requestedId ? "Project not found" : "No project yet"}
+          </h1>
+          <p className="max-w-[560px] text-[16px] leading-6 text-ink">
+            {requestedId
+              ? "That project is not in the local inventory."
+              : "Add a local Webflow export. The inventory lists every image, video, and Lottie once the scan finishes."}
+          </p>
         </section>
+      ) : (
+        <>
+          <section className="flex flex-col gap-[18px] px-6 pt-12 sm:px-10">
+            <h1 className="project-title text-navy">{inventory.siteName}</h1>
+            <p className="max-w-[640px] text-[16px] leading-6 text-ink sm:text-[18px] sm:leading-7">
+              Site-wide inventory — images, videos, and Lottie across pages, CMS, and custom
+              code.
+            </p>
+          </section>
+
+          <section className="flex flex-wrap items-end gap-8 px-6 pt-10 sm:gap-10 sm:px-10">
+            <Stat
+              label="Red"
+              value={counts.red}
+              color="#C23B2A"
+              detail=">1.5 MB or unused"
+            />
+            <span className="hidden h-[102px] w-px bg-mist sm:block" aria-hidden="true" />
+            <Stat
+              label="Yellow"
+              value={counts.yellow}
+              color="#C99212"
+              detail="500 KB–1.5 MB or missing alt"
+            />
+            <span className="hidden h-[102px] w-px bg-mist sm:block" aria-hidden="true" />
+            <Stat
+              label="Green"
+              value={counts.green}
+              color="#1F7A4D"
+              detail="Optimized and in use"
+            />
+            <div className="ml-auto flex flex-col justify-end gap-1.5 pb-1">
+              <p className="text-[12px] leading-4 tracking-[0.06em] text-ink uppercase">
+                Total weight
+              </p>
+              <p className="font-mono text-[22px] leading-7 text-navy">{formatBytes(totalBytes)}</p>
+            </div>
+          </section>
+
+          <section className="flex flex-wrap items-center justify-between gap-4 px-6 pt-9 sm:px-10">
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterChip active>All</FilterChip>
+              <FilterChip>Images</FilterChip>
+              <FilterChip>Videos</FilterChip>
+              <FilterChip>Lottie</FilterChip>
+              <span className="mx-2 h-7 w-px bg-mist" aria-hidden="true" />
+              <FilterChip tone="red">Red</FilterChip>
+              <FilterChip tone="yellow">Yellow</FilterChip>
+              <FilterChip tone="green">Green</FilterChip>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ViewToggle projectId={inventory.siteId} view={view} />
+              <span className="border border-mist px-3.5 py-2.5 text-[13px] leading-4 text-ink">
+                Usage: Any
+              </span>
+              <span className="border border-mist px-3.5 py-2.5 text-[13px] leading-4 text-ink">
+                Sort: Size ↓
+              </span>
+            </div>
+          </section>
+
+          <section className="overflow-x-auto px-6 pt-7 pb-10 sm:px-10">
+            {view === "grid" ? (
+              <AssetGrid assets={inventory.assets} projectId={inventory.siteId} />
+            ) : (
+              <AssetList assets={inventory.assets} />
+            )}
+          </section>
+        </>
       )}
-    </main>
+    </DashboardFrame>
   );
 }
 
-function Count({
+function Stat({
   label,
   value,
-  tone,
+  color,
+  detail,
 }: {
   label: string;
   value: number;
-  tone: HealthStatus;
+  color: string;
+  detail: string;
 }) {
   return (
-    <div>
-      <dt className={`font-medium ${toneClass(tone)}`}>{label}</dt>
-      <dd className="text-2xl font-semibold text-zinc-950">{value}</dd>
+    <div className="flex min-w-[140px] flex-col gap-2">
+      <p className="inline-flex items-center gap-2.5">
+        <span className="size-3 rounded-full" style={{ backgroundColor: color }} />
+        <span
+          className="text-[12px] leading-4 font-semibold tracking-[0.08em] uppercase"
+          style={{ color }}
+        >
+          {label}
+        </span>
+      </p>
+      <p className="text-[48px] leading-[52px] font-bold tracking-[-0.03em] text-navy">{value}</p>
+      <p className="text-[13px] leading-[18px] text-ink">{detail}</p>
     </div>
   );
 }
 
-function AssetRow({ projectId, asset }: { projectId: string; asset: Asset }) {
-  const src = mediaUrl(asset, projectId);
-  return (
-    <tr className="border-t border-zinc-200 align-top">
-      <td className="px-3 py-3">
-        <div className="flex items-center gap-3">
-          {src && asset.type === "image" ? (
-            // Local export files are served by the dev-only media route, not the image optimizer.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={src}
-              alt={asset.alt ?? ""}
-              className="h-12 w-12 rounded bg-zinc-100 object-cover"
-            />
-          ) : (
-            <span className="flex h-12 w-12 items-center justify-center rounded bg-zinc-100 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
-              {asset.type === "lottie" ? "Lottie" : asset.type}
-            </span>
-          )}
-          <span>
-            <span className="block font-medium text-zinc-950">{asset.name}</span>
-            <span className="block text-zinc-500">{asset.path ?? asset.url ?? "No file"}</span>
-          </span>
-        </div>
-      </td>
-      <td className="px-3 py-3 capitalize">{asset.type}</td>
-      <td className="px-3 py-3 whitespace-nowrap">{formatBytes(asset.sizeBytes)}</td>
-      <td className={`px-3 py-3 font-medium capitalize ${toneClass(asset.status)}`}>
-        {asset.status}
-      </td>
-      <td className="px-3 py-3 text-zinc-600">
-        {asset.usage.length === 0
-          ? "Unused"
-          : asset.usage.map((usage) => `${usage.context} · ${usage.location}`).join(", ")}
-      </td>
-    </tr>
-  );
-}
+function FilterChip({
+  children,
+  active = false,
+  tone,
+}: {
+  children: string;
+  active?: boolean;
+  tone?: HealthStatus;
+}) {
+  const toneClass =
+    tone === "red"
+      ? "border-mark-red/35 text-mark-red"
+      : tone === "yellow"
+        ? "border-mark-amber/35 text-mark-amber"
+        : tone === "green"
+          ? "border-mark-green/35 text-mark-green"
+          : "border-mist text-navy";
 
-function toneClass(status: HealthStatus): string {
-  if (status === "red") return "text-red-700";
-  if (status === "yellow") return "text-amber-700";
-  return "text-green-700";
+  return (
+    <span
+      className={`px-4 py-2.5 text-[13px] leading-4 font-medium ${
+        active ? "border border-navy bg-navy text-foam" : `border ${toneClass}`
+      }`}
+    >
+      {children}
+    </span>
+  );
 }

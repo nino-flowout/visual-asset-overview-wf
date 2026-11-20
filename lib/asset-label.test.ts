@@ -50,6 +50,6 @@ describe("usageChips", () => {
         { context: "page", location: "index.html" },
         { context: "cms", location: "blog/post.html" },
       ]),
-    ).toEqual(["Home", "CMS", "post"]);
+    ).toEqual(["Home", "CMS", "Post"]);
   });
 });
